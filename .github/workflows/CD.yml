@@ -6,58 +6,37 @@ on:
     types:
       - completed
 
+env:
+  IMAGE_TAG: v1
+
 jobs:
   deploy:
-
-    # Only deploy if CI succeeded
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
-    runs-on: ubuntu-latest
+    # Only deploy if CI succeeded on main
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: self-hosted
 
     steps:
-
-# Download Repository
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-# Setup Kubectl
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-
-# Kubernetes Authentication
-
-      - name: Configure Kubernetes Access
-        env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
-        run: |
-          mkdir -p ~/.kube
-          echo "$KUBE_CONFIG_DATA" | base64 -d > ~/.kube/config
-
-# Verify K8 Files Exist
-
       - name: Verify Kubernetes Files
-        run: |
-          ls -la k8s
+        run: ls -la k8s
 
-# DEPLOY APPLICATION
+      - name: Set image tag in deployment
+        run: |
+          sed -i "s|image: .*|image: dbunte300/weather-ml-app:${{ env.IMAGE_TAG }}|" k8s/deployment.yaml
+          grep "image:" k8s/deployment.yaml
 
       - name: Deploy Application
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
 
-# DEPLOYMENT VALIDATION
-
       - name: Check Deployment Status
         run: |
           kubectl get deployments
           kubectl get services
           kubectl get pods
-          
-# ROLLOUT CHECK
 
       - name: Verify Rollout
-        run: |
-          kubectl rollout status deployment/weather-ml-app
+        run: kubectl rollout status deployment/weather-ml-app --timeout=180s
