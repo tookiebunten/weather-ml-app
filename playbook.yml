@@ -1,0 +1,30 @@
+---
+- name: Prepare production server
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Install kubectl
+      become: true
+      get_url:
+        url: https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    - name: Install minikube
+      become: true
+      get_url:
+        url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        dest: /usr/local/bin/minikube
+        mode: '0755'
+
+    - name: Start minikube
+      command: minikube start --driver=docker
+
+    - name: Deploy image from DockerHub to Kubernetes
+      command: kubectl apply -f {{ playbook_dir }}/k8s/deployment.yaml
+
+    - name: Create service for the application
+      command: kubectl apply -f {{ playbook_dir }}/k8s/service.yaml
+
+    - name: Wait until all replicas are ready
+      command: kubectl rollout status deployment/weather-ml-app --timeout=240s
