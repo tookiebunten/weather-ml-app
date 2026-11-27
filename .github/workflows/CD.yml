@@ -7,7 +7,7 @@ on:
       - completed
 
 env:
-  IMAGE_TAG: v2
+  IMAGE_TAG: v1
 
 jobs:
   deploy:
