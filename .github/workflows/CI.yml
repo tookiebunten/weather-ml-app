@@ -65,12 +65,12 @@ jobs:
         with:
           context: .
           push: false
-          tags: dbunte300/weather-ml-app:v1
+          tags: dbunte300/weather-ml-app:v2
 
       # Container Launch Test
       - name: Test Docker Container Launch
         run: |
-          docker run -d --name weather-test dbunte300/weather-ml-app:v1
+          docker run -d --name weather-test dbunte300/weather-ml-app:v2
           docker exec weather-test python --version
 
       # Push Docker Image
@@ -79,4 +79,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: dbunte300/weather-ml-app:v1
+          tags: dbunte300/weather-ml-app:v2
